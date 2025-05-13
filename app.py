@@ -1,57 +1,35 @@
-from flask import Flask, render_template, request, redirect, url_for
-from werkzeug.utils import secure_filename
+import streamlit as st
 import tensorflow as tf
-import numpy as np
-import os
-from PIL import Image
+from tensorflow.keras.models import model_from_json
 
-# Configuración de Flask
-app = Flask(__name__)
-
-# Cargar el modelo
-model = tf.keras.models.model_from_json(open('model_numeros.json').read())
+# Cargar el modelo desde los archivos .json y .h5
+model = None
+with open('model_numeros.json', 'r') as json_file:
+    model_json = json_file.read()
+    model = model_from_json(model_json)
 model.load_weights('model_numeros.weights.h5')
 
-# Directorio de las imágenes subidas
-UPLOAD_FOLDER = 'uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# Función para procesar la imagen subida
-def prepare_image(image):
-    image = Image.open(image)
+# Función para hacer predicción
+def predict_image(image):
     image = image.resize((100, 100))
-    image = np.array(image) / 255.0  # Normalizar la imagen
-    image = np.expand_dims(image, axis=0)  # Agregar una dimensión para el batch
-    return image
+    image = np.array(image) / 255.0
+    image = np.expand_dims(image, axis=0)
+    predictions = model.predict(image)
+    return predictions
 
-# Página principal
-@app.route('/')
-def index():
-    return render_template('index.html')
+# Configuración de la interfaz
+st.title('Clasificador de Números (1-11)')
+st.write("Cargar una imagen del número del 1 al 11.")
 
-# Página para la predicción
-@app.route('/predict', methods=['POST'])
-def predict():
-    if 'file' not in request.files:
-        return redirect(request.url)
-    file = request.files['file']
-    
-    if file.filename == '':
-        return redirect(request.url)
-    
-    if file:
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-        
-        # Preprocesar la imagen
-        image = prepare_image(filepath)
-        
-        # Realizar la predicción
-        prediction = model.predict(image)
-        predicted_class = np.argmax(prediction, axis=1)[0]
-        
-        return render_template('result.html', prediction=predicted_class)
+uploaded_image = st.file_uploader("Cargar Imagen", type=["jpg", "png"])
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if uploaded_image is not None:
+    from PIL import Image
+    image = Image.open(uploaded_image)
+    st.image(image, caption='Imagen cargada', use_column_width=True)
+
+    # Realizar predicción
+    predictions = predict_image(image)
+    predicted_class = predictions.argmax()  # Clase predicha
+
+    st.write(f"Predicción: Número {predicted_class + 1}")
