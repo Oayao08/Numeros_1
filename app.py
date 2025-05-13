@@ -1,13 +1,11 @@
 import streamlit as st
 import tensorflow as tf
 from tensorflow.keras.models import model_from_json
+from tensorflow.keras.models import load_model
 
-# Cargar el modelo desde los archivos .json y .h5
-model = None
-with open('model_numeros.json', 'r') as json_file:
-    model_json = json_file.read()
-    model = model_from_json(model_json)
-model.load_weights('model_numeros.weights.h5')
+# Cargar el modelo completo desde archivo .keras
+model = load_model('modelo.keras')
+
 
 # Función para hacer predicción
 def predict_image(image):
