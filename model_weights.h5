@@ -1,0 +1,51 @@
+import tensorflow as tf
+from tensorflow.keras import layers, models
+import numpy as np
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+# Preparar el generador de datos (esto depende de cómo tengas organizadas las imágenes)
+train_datagen = ImageDataGenerator(rescale=1./255)
+val_datagen = ImageDataGenerator(rescale=1./255)
+
+train_generator = train_datagen.flow_from_directory(
+    'ruta_a_tus_imagenes_de_entrenamiento',  # Cambia esto a tu carpeta de imágenes
+    target_size=(100, 100),
+    batch_size=10,
+    class_mode='categorical'  # Asegúrate de usar 'categorical' para múltiples clases
+)
+
+validation_generator = val_datagen.flow_from_directory(
+    'ruta_a_tus_imagenes_de_validacion',  # Cambia esto a tu carpeta de validación
+    target_size=(100, 100),
+    batch_size=10,
+    class_mode='categorical'
+)
+
+# Definir el modelo
+model = models.Sequential([
+    layers.Conv2D(8, (3, 3), activation='relu', input_shape=(100, 100, 3)),
+    layers.MaxPooling2D(2, 2),
+    layers.Conv2D(16, (3, 3), activation='relu'),
+    layers.MaxPooling2D(2, 2),
+    layers.Flatten(),
+    layers.Dense(32, activation='relu'),
+    layers.Dense(11, activation='softmax')  # Usamos 'softmax' para clasificación multiclase
+])
+
+# Compilar el modelo
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Entrenar el modelo
+history = model.fit(
+    train_generator,
+    epochs=5,  # Ajusta el número de épocas según sea necesario
+    validation_data=validation_generator
+)
+
+# Guardar la arquitectura del modelo en JSON
+model_json = model.to_json()
+with open('model_numeros.json', 'w') as json_file:
+    json_file.write(model_json)
+
+# Guardar los pesos entrenados del modelo en un archivo .h5
+model.save_weights('model_numeros.weights.h5')
