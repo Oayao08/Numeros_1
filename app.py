@@ -1,11 +1,10 @@
 import streamlit as st
 import tensorflow as tf
-from tensorflow.keras.models import model_from_json
 from tensorflow.keras.models import load_model
+import numpy as np  # Asegúrate de importar numpy
 
 # Cargar el modelo completo desde archivo .keras
 model = load_model('modelo.keras')
-
 
 # Función para hacer predicción
 def predict_image(image):
