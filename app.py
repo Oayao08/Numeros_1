@@ -13,10 +13,19 @@ except Exception as e:
 
 # Función para hacer predicción
 def predict_image(image):
+    # Asegúrate de que la imagen tiene el tamaño correcto y la forma adecuada para la red
+    image = image.convert('RGB')  # Convertir imagen a RGB si no está en ese formato
     image = image.resize((100, 100))  # Asegúrate de que la imagen tiene el tamaño correcto
-    image = np.array(image) / 255.0   # Normalizar la imagen
+    image = np.array(image).astype('float32') / 255.0  # Normalizar la imagen (a float32)
     image = np.expand_dims(image, axis=0)  # Añadir la dimensión del batch
-    predictions = model.predict(image)  # Predicción del modelo
+    
+    # Verifica si el modelo espera una imagen en escala de grises o color (100, 100, 1) o (100, 100, 3)
+    if image.shape[-1] == 3:  # Si tiene 3 canales (RGB)
+        predictions = model.predict(image)  # Predicción del modelo
+    else:
+        st.error("El modelo no está configurado para imágenes con esta cantidad de canales")
+        return None
+    
     return predictions
 
 # Configuración de la interfaz
@@ -31,6 +40,6 @@ if uploaded_image is not None:
 
     # Realizar predicción
     predictions = predict_image(image)
-    predicted_class = predictions.argmax()  # Clase predicha
-
-    st.write(f"Predicción: Número {predicted_class + 1}")
+    if predictions is not None:
+        predicted_class = predictions.argmax()  # Clase predicha
+        st.write(f"Predicción: Número {predicted_class + 1}")
